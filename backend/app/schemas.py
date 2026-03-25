@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import datetime as dt
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 
 # ---------- Tickers ----------
@@ -10,6 +10,16 @@ from pydantic import BaseModel, Field, ConfigDict
 class TickerCreate(BaseModel):
     symbol: str = Field(min_length=1, max_length=20)
     name: str | None = Field(default=None, max_length=200)
+
+    @field_validator("symbol")
+    @classmethod
+    def normalize_symbol(cls, value: str) -> str:
+        normalized = value.strip().upper()
+
+        if not normalized:
+            raise ValueError("Symbol is required")
+
+        return normalized
 
 
 class TickerOut(BaseModel):
