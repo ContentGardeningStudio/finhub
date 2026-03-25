@@ -21,6 +21,15 @@ class TickerCreate(BaseModel):
 
         return normalized
 
+    @field_validator("name")
+    @classmethod
+    def normalize_name(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+
+        normalized = value.strip()
+        return normalized
+
 
 class TickerOut(BaseModel):
     id: int
