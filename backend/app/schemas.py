@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import datetime as dt
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 # ---------- Tickers ----------
@@ -17,8 +17,7 @@ class TickerOut(BaseModel):
     symbol: str
     name: str | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ---------- Prices ----------
@@ -32,8 +31,7 @@ class PriceOut(BaseModel):
     close: float | None = None
     volume: int | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ---------- Sync ----------

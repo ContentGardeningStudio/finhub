@@ -6,18 +6,21 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from sqlalchemy.orm import Session
 
-from .settings import settings
-from .db import Base, engine, get_db, SessionLocal
+from .db import get_db, get_session_local
 from . import crud, schemas
 from .yf_service import download_daily_ohlcv
+from .settings import get_settings
+
+settings = get_settings()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup logic
-    Base.metadata.create_all(bind=engine)
+    # Base.metadata.create_all(bind=engine). # Moved to Alembic now!
 
     # Seed default tickers
+    SessionLocal = get_session_local()
     db = SessionLocal()
     try:
         crud.create_ticker(db, schemas.TickerCreate(symbol="AAPL", name="Apple"))
@@ -32,10 +35,7 @@ async def lifespan(app: FastAPI):
     # Example later: close Redis, stop schedulers, etc.
 
 
-app = FastAPI(
-    title=settings.app_name,
-    lifespan=lifespan
-)
+app = FastAPI(title=settings.app_name, lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -46,6 +46,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.get("/health")
 def health():
