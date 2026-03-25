@@ -37,6 +37,27 @@ def test_create_and_list_ticker(client):
     assert any(t["symbol"] == "TEST" for t in data)
 
 
+def test_create_ticker_normalizes_symbol(client):
+    response = client.post(
+        "/tickers",
+        json={"symbol": " aapl ", "name": "Apple"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+
+    # API response should already be normalized
+    assert data["symbol"] == "AAPL"
+
+    # Fetch again to ensure DB stored normalized value
+    response = client.get("/tickers")
+    assert response.status_code == 200
+
+    tickers = response.json()
+
+    assert any(t["symbol"] == "AAPL" for t in tickers)
+
+    
 def test_sync_and_get_prices(client):
     fake_df = pd.DataFrame(
         [
