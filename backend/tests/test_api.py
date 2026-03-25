@@ -57,7 +57,22 @@ def test_create_ticker_normalizes_symbol(client):
 
     assert any(t["symbol"] == "AAPL" for t in tickers)
 
-    
+
+def test_create_ticker_is_idempotent(client):
+    response1 = client.post("/tickers", json={"symbol": "aapl", "name": "Apple"})
+    response2 = client.post("/tickers", json={"symbol": " AAPL ", "name": "Apple"})
+
+    assert response1.status_code == 200
+    assert response2.status_code == 200
+
+    data1 = response1.json()
+    data2 = response2.json()
+
+    assert data1["id"] == data2["id"]
+    assert data1["symbol"] == "AAPL"
+    assert data2["symbol"] == "AAPL"
+
+
 def test_sync_and_get_prices(client):
     fake_df = pd.DataFrame(
         [

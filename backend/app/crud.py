@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import math
 import datetime as dt
+
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+
 from sqlalchemy import select
 from .models import Ticker, Price
 from .schemas import TickerCreate
@@ -18,15 +21,30 @@ def get_ticker_by_symbol(db: Session, symbol: str) -> Ticker | None:
 
 
 def create_ticker(db: Session, payload: TickerCreate) -> Ticker:
-    symbol = payload.symbol.upper().strip()
+    # symbol = payload.symbol.upper().strip()
+    # .upper().strip() no more needed; normalization is now done at the TickerCreate schema level
+
+    symbol = payload.symbol
+
     existing = get_ticker_by_symbol(db, symbol)
     if existing:
         return existing
+
     obj = Ticker(symbol=symbol, name=payload.name)
     db.add(obj)
-    db.commit()
-    db.refresh(obj)
-    return obj
+
+    try:
+        db.commit()
+        db.refresh(obj)
+        return obj
+    except IntegrityError:
+        db.rollback()
+
+        existing = get_ticker_by_symbol(db, symbol)
+        if existing:
+            return existing
+
+        raise
 
 
 def _nan_to_none(x):
